@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import Attendance from './Attendance.jsx'
+import Reports from './Reports.jsx'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -180,8 +181,9 @@ export default function App() {
       <div className="tabs">
         <button className={tab === 'students' ? '' : 'secondary'} onClick={() => setTab('students')}>Students</button>
         <button className={tab === 'attendance' ? '' : 'secondary'} onClick={() => setTab('attendance')}>Attendance</button>
+        <button className={tab === 'reports' ? '' : 'secondary'} onClick={() => setTab('reports')}>Reports</button>
       </div>
-      {tab === 'students' ? <Students /> : <Attendance />}
+      {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance /> : <Reports />}
     </div>
   )
 }
