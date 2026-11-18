@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
+import Attendance from './Attendance.jsx'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -159,6 +160,7 @@ function Students() {
 
 export default function App() {
   const [session, setSession] = useState(undefined)
+  const [tab, setTab] = useState('students')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -175,7 +177,11 @@ export default function App() {
         <h1>Attendly</h1>
         <button className="secondary" onClick={() => supabase.auth.signOut()}>Sign out</button>
       </header>
-      <Students />
+      <div className="tabs">
+        <button className={tab === 'students' ? '' : 'secondary'} onClick={() => setTab('students')}>Students</button>
+        <button className={tab === 'attendance' ? '' : 'secondary'} onClick={() => setTab('attendance')}>Attendance</button>
+      </div>
+      {tab === 'students' ? <Students /> : <Attendance />}
     </div>
   )
 }
