@@ -103,7 +103,7 @@ export default function Attendance() {
                       <div className="row">
                         <button
                           type="button"
-                          className={marks[s.id] === 'present' ? '' : 'secondary'}
+                          className={marks[s.id] === 'present' ? 'present-on' : 'secondary'}
                           onClick={() => setMarks({ ...marks, [s.id]: 'present' })}
                         >Present</button>
                         <button

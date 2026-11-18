@@ -19,11 +19,13 @@ function Login() {
   }
 
   return (
-    <div className="wrap" style={{ maxWidth: 380 }}>
-      <h1 style={{ marginBottom: 16 }}>Attendly – Admin Login</h1>
-      <form className="card" onSubmit={submit}>
+    <div className="login-wrap">
+      <form className="card login-card" onSubmit={submit}>
+        <div className="crest big">A</div>
+        <h1>Attendly</h1>
+        <p className="muted">Administrator sign in</p>
         {error && <div className="msg err">{error}</div>}
-        <div className="row" style={{ flexDirection: 'column' }}>
+        <div className="row">
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
@@ -169,21 +171,31 @@ export default function App() {
     return () => data.subscription.unsubscribe()
   }, [])
 
-  if (session === undefined) return <div className="wrap"><p className="muted">Loading…</p></div>
+  if (session === undefined) return <div className="login-wrap"><p className="muted">Loading…</p></div>
   if (!session) return <Login />
 
   return (
-    <div className="wrap">
-      <header>
-        <h1>Attendly</h1>
-        <button className="secondary" onClick={() => supabase.auth.signOut()}>Sign out</button>
-      </header>
-      <div className="tabs">
-        <button className={tab === 'students' ? '' : 'secondary'} onClick={() => setTab('students')}>Students</button>
-        <button className={tab === 'attendance' ? '' : 'secondary'} onClick={() => setTab('attendance')}>Attendance</button>
-        <button className={tab === 'reports' ? '' : 'secondary'} onClick={() => setTab('reports')}>Reports</button>
+    <>
+      <div className="topbar">
+        <div className="topbar-inner">
+          <div className="brand">
+            <div className="crest">A</div>
+            <div>
+              <h1>Attendly</h1>
+              <small>College attendance</small>
+            </div>
+          </div>
+          <button className="ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
       </div>
-      {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance /> : <Reports />}
-    </div>
+      <div className="wrap">
+        <div className="tabs">
+          <button className={tab === 'students' ? 'tab active' : 'tab'} onClick={() => setTab('students')}>Students</button>
+          <button className={tab === 'attendance' ? 'tab active' : 'tab'} onClick={() => setTab('attendance')}>Attendance</button>
+          <button className={tab === 'reports' ? 'tab active' : 'tab'} onClick={() => setTab('reports')}>Reports</button>
+        </div>
+        {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance /> : <Reports />}
+      </div>
+    </>
   )
 }
