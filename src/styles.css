@@ -22,3 +22,4 @@ th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eceef1; f
 .stat b { font-size: 22px; display: block; }
 button.danger-on { background: #b42318; border-color: #b42318; color: #fff; }
 .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+button.saved:disabled { background: #e8f6ec; color: #17653a; border-color: #b7e0c5; opacity: 1; }

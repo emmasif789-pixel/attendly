@@ -118,8 +118,12 @@ export default function Attendance() {
               </tbody>
             </table>
             <div className="row" style={{ marginTop: 12 }}>
-              <button onClick={save} disabled={busy || !dirty}>
-                {busy ? 'Saving…' : savedCount ? 'Update attendance' : 'Save attendance'}
+              <button
+                onClick={save}
+                disabled={busy || !dirty}
+                className={!dirty && !busy ? 'saved' : ''}
+              >
+                {busy ? 'Saving…' : !dirty && savedCount ? '✓ Saved' : savedCount ? 'Update attendance' : 'Save attendance'}
               </button>
             </div>
           </>
