@@ -45,6 +45,8 @@ function Students() {
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(null) // { id, name, roll, sectionId, count }
+  const [saving, setSaving] = useState(false)
 
   async function load() {
     const [s, st] = await Promise.all([
@@ -105,6 +107,41 @@ function Students() {
     else { setMsg({ type: 'ok', text: `${st.name} deleted.` }); await load() }
   }
 
+  async function startEdit(st) {
+    setMsg(null)
+    const { count, error } = await supabase
+      .from('attendance')
+      .select('id', { count: 'exact', head: true })
+      .eq('student_id', st.id)
+    if (error) { setMsg({ type: 'err', text: error.message }); return }
+    setEditing({ id: st.id, name: st.name, roll: st.roll_number, sectionId: st.section_id, count: count || 0 })
+  }
+
+  async function saveEdit() {
+    setMsg(null)
+    const n = editing.name.trim()
+    const r = editing.roll.trim()
+    if (!n || !r) {
+      setMsg({ type: 'err', text: 'Name and roll number cannot be empty.' })
+      return
+    }
+    const patch = { name: n, roll_number: r }
+    if (editing.count === 0) patch.section_id = editing.sectionId
+    setSaving(true)
+    const { error } = await supabase.from('students').update(patch).eq('id', editing.id)
+    if (error) {
+      let text = error.message
+      if (error.code === '23505') text = `Roll number ${r} is already used by another student.`
+      else if (error.code === '23503') text = 'This student now has attendance records, so their section cannot be changed.'
+      setMsg({ type: 'err', text })
+    } else {
+      setMsg({ type: 'ok', text: `${n} updated.` })
+      setEditing(null)
+      await load()
+    }
+    setSaving(false)
+  }
+
   const sectionName = (id) => sections.find((s) => s.id === id)?.name ?? ''
   const shown = filter === 'all' ? students : students.filter((s) => s.section_id === filter)
 
@@ -153,12 +190,37 @@ function Students() {
           <table>
             <thead><tr><th>Roll no.</th><th>Name</th><th>Section</th><th></th></tr></thead>
             <tbody>
-              {shown.map((s) => (
+              {shown.map((s) => editing?.id === s.id ? (
+                <tr key={s.id}>
+                  <td><input style={{ minWidth: 80 }} value={editing.roll} onChange={(e) => setEditing({ ...editing, roll: e.target.value })} /></td>
+                  <td><input style={{ minWidth: 120 }} value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></td>
+                  <td>
+                    <select style={{ minWidth: 150 }} value={editing.sectionId} disabled={editing.count > 0}
+                      onChange={(e) => setEditing({ ...editing, sectionId: e.target.value })}>
+                      {sections.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                    </select>
+                    {editing.count > 0 && (
+                      <div className="muted">Section locked: {editing.count} attendance record{editing.count === 1 ? '' : 's'}.</div>
+                    )}
+                  </td>
+                  <td>
+                    <div className="row" style={{ flexWrap: 'nowrap' }}>
+                      <button onClick={saveEdit} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+                      <button className="secondary" onClick={() => setEditing(null)} disabled={saving}>Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
                 <tr key={s.id}>
                   <td>{s.roll_number}</td>
                   <td>{s.name}</td>
                   <td>{sectionName(s.section_id)}</td>
-                  <td><button className="danger" onClick={() => remove(s)}>Delete</button></td>
+                  <td>
+                    <div className="row" style={{ flexWrap: 'nowrap' }}>
+                      <button className="secondary" onClick={() => startEdit(s)}>Edit</button>
+                      <button className="danger" onClick={() => remove(s)}>Delete</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
