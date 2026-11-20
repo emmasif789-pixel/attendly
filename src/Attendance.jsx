@@ -120,10 +120,10 @@ export default function Attendance() {
             <div className="row" style={{ marginTop: 12 }}>
               <button
                 onClick={save}
-                disabled={busy || !dirty}
-                className={!dirty && !busy ? 'saved' : ''}
+                disabled={busy || (savedCount > 0 && !dirty)}
+                className={savedCount > 0 && !dirty && !busy ? 'saved' : ''}
               >
-                {busy ? 'Saving…' : !dirty && savedCount ? '✓ Saved' : savedCount ? 'Update attendance' : 'Save attendance'}
+                {busy ? 'Saving…' : savedCount > 0 && !dirty ? '✓ Saved' : savedCount > 0 ? 'Update attendance' : 'Save attendance'}
               </button>
             </div>
           </>
