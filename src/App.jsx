@@ -91,7 +91,15 @@ function Students() {
   }
 
   async function remove(st) {
-    if (!window.confirm(`Delete ${st.name} (${st.roll_number})? This cannot be undone.`)) return
+    const { count, error: countError } = await supabase
+      .from('attendance')
+      .select('id', { count: 'exact', head: true })
+      .eq('student_id', st.id)
+    if (countError) { setMsg({ type: 'err', text: countError.message }); return }
+    const extra = count
+      ? ` This will also permanently delete ${count} attendance record${count === 1 ? '' : 's'}.`
+      : ''
+    if (!window.confirm(`Delete ${st.name} (${st.roll_number})?${extra} This cannot be undone.`)) return
     const { error } = await supabase.from('students').delete().eq('id', st.id)
     if (error) setMsg({ type: 'err', text: error.message })
     else { setMsg({ type: 'ok', text: `${st.name} deleted.` }); await load() }
@@ -164,6 +172,7 @@ function Students() {
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [tab, setTab] = useState('students')
+  const [admin, setAdmin] = useState(undefined) // undefined = checking, true/false = result
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -171,8 +180,27 @@ export default function App() {
     return () => data.subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (!session) { setAdmin(undefined); return }
+    setAdmin(undefined)
+    supabase.rpc('is_admin').then(({ data, error }) => setAdmin(!error && data === true))
+  }, [session?.user?.id])
+
   if (session === undefined) return <div className="login-wrap"><p className="muted">Loading…</p></div>
   if (!session) return <Login />
+  if (admin === undefined) return <div className="login-wrap"><p className="muted">Checking access…</p></div>
+  if (admin === false) {
+    return (
+      <div className="login-wrap">
+        <div className="card login-card">
+          <div className="crest big">A</div>
+          <h1>Access denied</h1>
+          <p className="muted">This account is not an Attendly administrator.</p>
+          <button onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
