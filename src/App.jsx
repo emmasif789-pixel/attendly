@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import Attendance from './Attendance.jsx'
 import Reports from './Reports.jsx'
+import Dashboard from './Dashboard.jsx'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -233,7 +234,7 @@ function Students() {
 
 export default function App() {
   const [session, setSession] = useState(undefined)
-  const [tab, setTab] = useState('students')
+  const [tab, setTab] = useState('dashboard')
   const [attendanceDirty, setAttendanceDirty] = useState(false)
   const [admin, setAdmin] = useState(undefined) // undefined = checking, true/false = result
 
@@ -287,11 +288,12 @@ export default function App() {
       </div>
       <div className="wrap">
         <div className="tabs">
+          <button className={tab === 'dashboard' ? 'tab active' : 'tab'} onClick={() => changeTab('dashboard')}>Dashboard</button>
           <button className={tab === 'students' ? 'tab active' : 'tab'} onClick={() => changeTab('students')}>Students</button>
           <button className={tab === 'attendance' ? 'tab active' : 'tab'} onClick={() => changeTab('attendance')}>Attendance</button>
           <button className={tab === 'reports' ? 'tab active' : 'tab'} onClick={() => changeTab('reports')}>Reports</button>
         </div>
-        {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : <Reports />}
+        {tab === 'dashboard' ? <Dashboard /> : tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : <Reports />}
       </div>
     </>
   )

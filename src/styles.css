@@ -165,3 +165,11 @@ tbody tr:hover td { background: rgba(201, 162, 39, .10); }
   .tabs button.tab { padding: 8px 14px; }
 }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+
+/* Dashboard */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; background: #e7eaf2; color: var(--navy); }
+.badge.ok { background: rgba(21, 128, 61, .14); color: #14532d; }
+.badge.warn { background: rgba(201, 162, 39, .22); color: #6b5300; }
+.badge.bad { background: rgba(200, 16, 46, .12); color: #9b0d24; }
+.bar { height: 6px; margin-top: 5px; border-radius: 999px; background: rgba(10, 26, 68, .10); overflow: hidden; min-width: 90px; }
+.bar > div { height: 100%; background: linear-gradient(90deg, var(--royal), var(--gold)); border-radius: 999px; }
