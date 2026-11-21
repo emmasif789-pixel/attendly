@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import Attendance from './Attendance.jsx'
 import Reports from './Reports.jsx'
 import Dashboard from './Dashboard.jsx'
+import History from './History.jsx'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -292,8 +293,9 @@ export default function App() {
           <button className={tab === 'students' ? 'tab active' : 'tab'} onClick={() => changeTab('students')}>Students</button>
           <button className={tab === 'attendance' ? 'tab active' : 'tab'} onClick={() => changeTab('attendance')}>Attendance</button>
           <button className={tab === 'reports' ? 'tab active' : 'tab'} onClick={() => changeTab('reports')}>Reports</button>
+          <button className={tab === 'history' ? 'tab active' : 'tab'} onClick={() => changeTab('history')}>History</button>
         </div>
-        {tab === 'dashboard' ? <Dashboard /> : tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : <Reports />}
+        {tab === 'dashboard' ? <Dashboard /> : tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : tab === 'reports' ? <Reports /> : <History />}
       </div>
     </>
   )
