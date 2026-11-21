@@ -234,6 +234,7 @@ function Students() {
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [tab, setTab] = useState('students')
+  const [attendanceDirty, setAttendanceDirty] = useState(false)
   const [admin, setAdmin] = useState(undefined) // undefined = checking, true/false = result
 
   useEffect(() => {
@@ -247,6 +248,12 @@ export default function App() {
     setAdmin(undefined)
     supabase.rpc('is_admin').then(({ data, error }) => setAdmin(!error && data === true))
   }, [session?.user?.id])
+
+  function changeTab(next) {
+    if (tab === 'attendance' && next !== 'attendance' && attendanceDirty &&
+        !window.confirm('You have unsaved attendance changes. Discard them?')) return
+    setTab(next)
+  }
 
   if (session === undefined) return <div className="login-wrap"><p className="muted">Loading…</p></div>
   if (!session) return <Login />
@@ -280,11 +287,11 @@ export default function App() {
       </div>
       <div className="wrap">
         <div className="tabs">
-          <button className={tab === 'students' ? 'tab active' : 'tab'} onClick={() => setTab('students')}>Students</button>
-          <button className={tab === 'attendance' ? 'tab active' : 'tab'} onClick={() => setTab('attendance')}>Attendance</button>
-          <button className={tab === 'reports' ? 'tab active' : 'tab'} onClick={() => setTab('reports')}>Reports</button>
+          <button className={tab === 'students' ? 'tab active' : 'tab'} onClick={() => changeTab('students')}>Students</button>
+          <button className={tab === 'attendance' ? 'tab active' : 'tab'} onClick={() => changeTab('attendance')}>Attendance</button>
+          <button className={tab === 'reports' ? 'tab active' : 'tab'} onClick={() => changeTab('reports')}>Reports</button>
         </div>
-        {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance /> : <Reports />}
+        {tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : <Reports />}
       </div>
     </>
   )

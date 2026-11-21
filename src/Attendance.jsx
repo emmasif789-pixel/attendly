@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
+import { isDirty, unmarkedStudents, changedRows, countMarks } from './attendanceLogic'
 
 function todayLocal() {
   const d = new Date()
@@ -7,7 +8,9 @@ function todayLocal() {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-export default function Attendance() {
+const DISCARD = 'You have unsaved attendance changes. Discard them?'
+
+export default function Attendance({ onDirtyChange }) {
   const [sections, setSections] = useState([])
   const [sectionId, setSectionId] = useState('')
   const [date, setDate] = useState(todayLocal())
@@ -17,6 +20,20 @@ export default function Attendance() {
   const [msg, setMsg] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+
+  const dirty = isDirty(students, marks, saved)
+
+  // Tell the parent about unsaved changes so switching tabs can warn too.
+  useEffect(() => { onDirtyChange?.(dirty) }, [dirty])
+  useEffect(() => () => onDirtyChange?.(false), [])
+
+  // Warn when closing or reloading the page with unsaved changes.
+  useEffect(() => {
+    if (!dirty) return
+    const handler = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
 
   useEffect(() => {
     supabase.from('sections').select('id,name').order('name').then(({ data, error }) => {
@@ -49,25 +66,29 @@ export default function Attendance() {
 
   useEffect(() => { load() }, [sectionId, date])
 
+  function guarded(change) {
+    if (dirty && !window.confirm(DISCARD)) return
+    change()
+  }
+
   async function save() {
     setMsg(null)
-    const unmarked = students.filter((s) => !marks[s.id])
+    const unmarked = unmarkedStudents(students, marks)
     if (unmarked.length) {
       setMsg({ type: 'err', text: `Mark every student first. Not marked: ${unmarked.map((s) => s.name).join(', ')}.` })
       return
     }
+    const rows = changedRows(students, marks, saved, sectionId, date)
+    if (rows.length === 0) return
     setBusy(true)
-    const rows = students.map((s) => ({
-      student_id: s.id, section_id: sectionId, date, status: marks[s.id],
-    }))
     const { error } = await supabase.from('attendance').upsert(rows, { onConflict: 'student_id,date' })
     if (error) setMsg({ type: 'err', text: error.message })
     else { setMsg({ type: 'ok', text: `Attendance saved for ${date}.` }); await load() }
     setBusy(false)
   }
 
-  const dirty = students.some((s) => marks[s.id] !== saved[s.id])
   const savedCount = students.filter((s) => saved[s.id]).length
+  const counts = countMarks(students, marks)
 
   return (
     <>
@@ -75,10 +96,15 @@ export default function Attendance() {
       <div className="card">
         <h2>Mark attendance</h2>
         <div className="row">
-          <select value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+          <select value={sectionId} onChange={(e) => guarded(() => setSectionId(e.target.value))}>
             {sections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <input type="date" value={date} max={todayLocal()} onChange={(e) => e.target.value && setDate(e.target.value)} />
+          <input
+            type="date"
+            value={date}
+            max={todayLocal()}
+            onChange={(e) => e.target.value && guarded(() => setDate(e.target.value))}
+          />
         </div>
       </div>
 
@@ -92,6 +118,12 @@ export default function Attendance() {
                 ? `No attendance saved for ${date} yet.`
                 : `Saved attendance exists for ${date} (${savedCount} of ${students.length} students). You can edit and save again.`}
             </p>
+            <div className="stats" style={{ marginBottom: 12 }}>
+              <div className="stat"><span className="muted">Present</span><b>{counts.present}</b></div>
+              <div className="stat"><span className="muted">Absent</span><b>{counts.absent}</b></div>
+              <div className="stat"><span className="muted">Not marked</span><b>{counts.unmarked}</b></div>
+            </div>
+            {dirty && <div className="msg err" style={{ marginBottom: 12 }}>You have unsaved changes.</div>}
             <table>
               <thead><tr><th>Roll no.</th><th>Name</th><th>Status</th></tr></thead>
               <tbody>
