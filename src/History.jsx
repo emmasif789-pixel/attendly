@@ -32,7 +32,7 @@ export default function History() {
   const requestId = useRef(0)
 
   useEffect(() => {
-    supabase.from('sections').select('id,name').order('name').then(({ data }) => data && setSections(data))
+    supabase.from('sections').select('id,name').order('position').then(({ data }) => data && setSections(data))
   }, [])
 
   // Wait a moment after typing before searching.
@@ -60,7 +60,7 @@ export default function History() {
 
     Promise.all([
       filtered(supabase.from('attendance_history').select('id,date,status,section_name,roll_number,student_name', { count: 'exact' }))
-        .order('date', { ascending: false }).order('section_name').order('roll_sort').range(a, b),
+        .order('date', { ascending: false }).order('section_position').order('roll_sort').range(a, b),
       filtered(supabase.from('attendance_history').select('id', { count: 'exact', head: true })).eq('status', 'present'),
       filtered(supabase.from('attendance_history').select('id', { count: 'exact', head: true })).eq('status', 'absent'),
     ]).then(([list, p, ab]) => {
@@ -95,23 +95,27 @@ export default function History() {
 
       <div className="card">
         <h2>Filter attendance history</h2>
-        <div className="row" style={{ marginBottom: 10 }}>
+        <div className="row stack-sm" style={{ marginBottom: 10 }}>
           <select value={sectionId} onChange={(e) => { setSectionId(e.target.value); setPage(0) }}>
             <option value="all">All sections</option>
             {sections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(0) }}>
-            <option value="all">Present and absent</option>
+            <option value="all">All statuses</option>
             <option value="present">Present only</option>
             <option value="absent">Absent only</option>
           </select>
           <input placeholder="Search name or roll number" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </div>
-        <div className="row" style={{ alignItems: 'center' }}>
-          <label className="muted">From</label>
-          <input type="date" value={from} max={to || today} onChange={(e) => { setFrom(e.target.value); setPage(0) }} />
-          <label className="muted">To</label>
-          <input type="date" value={to} max={today} onChange={(e) => { setTo(e.target.value); setPage(0) }} />
+        <div className="date-grid">
+          <label className="field">
+            <span className="muted">From</span>
+            <input type="date" value={from} max={to || today} onChange={(e) => { setFrom(e.target.value); setPage(0) }} />
+          </label>
+          <label className="field">
+            <span className="muted">To</span>
+            <input type="date" value={to} max={today} onChange={(e) => { setTo(e.target.value); setPage(0) }} />
+          </label>
         </div>
         <div className="row" style={{ marginTop: 10 }}>
           <button className="secondary" onClick={() => preset(7)}>Last 7 days</button>
@@ -134,14 +138,14 @@ export default function History() {
         ) : (
           <>
             <table>
-              <thead><tr><th>Date</th><th>Roll no.</th><th>Name</th><th>Section</th><th>Status</th></tr></thead>
+              <thead><tr><th>Date</th><th>Roll no.</th><th>Name</th><th className="hide-sm">Section</th><th>Status</th></tr></thead>
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
-                    <td>{r.date}</td>
+                    <td className="nowrap">{r.date}</td>
                     <td>{r.roll_number}</td>
-                    <td>{r.student_name}</td>
-                    <td>{r.section_name}</td>
+                    <td>{r.student_name}<span className="sub only-sm">{r.section_name}</span></td>
+                    <td className="hide-sm">{r.section_name}</td>
                     <td><span className={r.status === 'present' ? 'badge ok' : 'badge bad'}>{r.status === 'present' ? 'Present' : 'Absent'}</span></td>
                   </tr>
                 ))}

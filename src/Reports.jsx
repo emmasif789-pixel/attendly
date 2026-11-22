@@ -21,7 +21,7 @@ export default function Reports() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('section_summary').select('section_id,section_name,total_students').order('section_name')
+    supabase.from('section_summary').select('section_id,section_name,total_students').order('position')
       .then(({ data, error }) => {
         if (error) { setMsg({ type: 'err', text: error.message }); return }
         setTotals(data)
@@ -83,7 +83,7 @@ export default function Reports() {
 
       <div className="card">
         <h2>Report filters</h2>
-        <div className="row">
+        <div className="row stack-sm">
           <select value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
             {totals.map((t) => <option key={t.section_id} value={t.section_id}>{t.section_name}</option>)}
           </select>
@@ -133,12 +133,12 @@ export default function Reports() {
             <h2>Student attendance</h2>
             {students.length === 0 ? <p className="muted">No students in this section.</p> : (
               <table>
-                <thead><tr><th>Roll no.</th><th>Name</th><th>Present</th><th>Absent</th><th>Days</th><th>%</th><th></th></tr></thead>
+                <thead><tr><th>Roll no.</th><th>Name</th><th className="hide-sm">Present</th><th className="hide-sm">Absent</th><th className="hide-sm">Days</th><th className="only-sm">Present / days</th><th>%</th><th></th></tr></thead>
                 <tbody>
                   {students.map((s) => (
                     <tr key={s.student_id}>
                       <td>{s.roll_number}</td><td>{s.name}</td>
-                      <td>{s.present_days}</td><td>{s.absent_days}</td><td>{s.recorded_days}</td>
+                      <td className="hide-sm">{s.present_days}</td><td className="hide-sm">{s.absent_days}</td><td className="hide-sm">{s.recorded_days}</td><td className="only-sm">{s.present_days} / {s.recorded_days}</td>
                       <td>{s.percentage === null ? '–' : `${s.percentage}%`}</td>
                       <td><button className="secondary" onClick={() => openHistory(s)}>History</button></td>
                     </tr>

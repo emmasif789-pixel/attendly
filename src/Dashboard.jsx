@@ -23,7 +23,7 @@ export default function Dashboard() {
   useEffect(() => {
     const dates = lastNDates(today, 7)
     Promise.all([
-      supabase.from('section_summary').select('section_id,section_name,total_students').order('section_name'),
+      supabase.from('section_summary').select('section_id,section_name,total_students').order('position'),
       supabase.from('daily_summary').select('section_id,date,present,absent,marked').gte('date', dates[dates.length - 1]),
       supabase.from('section_rate').select('section_id,present_records,marked_records,percentage'),
       supabase.from('student_summary').select('student_id,section_id,roll_number,name,present_days,recorded_days,percentage')
@@ -118,13 +118,13 @@ export default function Dashboard() {
         <h2>Lowest attendance</h2>
         {data.low.length === 0 ? <p className="muted">No attendance recorded yet.</p> : (
           <table>
-            <thead><tr><th>Roll no.</th><th>Name</th><th>Section</th><th>Present / days</th><th>%</th></tr></thead>
+            <thead><tr><th>Roll no.</th><th>Name</th><th className="hide-sm">Section</th><th>Present / days</th><th>%</th></tr></thead>
             <tbody>
               {data.low.map((s) => (
                 <tr key={s.student_id}>
                   <td>{s.roll_number}</td>
-                  <td>{s.name}</td>
-                  <td>{sectionName(s.section_id)}</td>
+                  <td>{s.name}<span className="sub only-sm">{sectionName(s.section_id)}</span></td>
+                  <td className="hide-sm">{sectionName(s.section_id)}</td>
                   <td>{s.present_days} / {s.recorded_days}</td>
                   <td><strong>{s.percentage}%</strong></td>
                 </tr>

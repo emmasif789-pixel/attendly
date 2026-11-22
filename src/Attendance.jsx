@@ -36,7 +36,7 @@ export default function Attendance({ onDirtyChange }) {
   }, [dirty])
 
   useEffect(() => {
-    supabase.from('sections').select('id,name').order('name').then(({ data, error }) => {
+    supabase.from('sections').select('id,name').order('position').then(({ data, error }) => {
       if (error) setMsg({ type: 'err', text: error.message })
       else { setSections(data); setSectionId(data[0]?.id || '') }
     })
@@ -95,7 +95,7 @@ export default function Attendance({ onDirtyChange }) {
       {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}
       <div className="card">
         <h2>Mark attendance</h2>
-        <div className="row">
+        <div className="row stack-sm">
           <select value={sectionId} onChange={(e) => guarded(() => setSectionId(e.target.value))}>
             {sections.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -108,7 +108,7 @@ export default function Attendance({ onDirtyChange }) {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card flush">
         {loading ? <p className="muted">Loading…</p> : students.length === 0 ? (
           <p className="muted">No students in this section. Register students first.</p>
         ) : (
@@ -118,38 +118,40 @@ export default function Attendance({ onDirtyChange }) {
                 ? `No attendance saved for ${date} yet.`
                 : `Saved attendance exists for ${date} (${savedCount} of ${students.length} students). You can edit and save again.`}
             </p>
-            <div className="stats" style={{ marginBottom: 12 }}>
-              <div className="stat"><span className="muted">Present</span><b>{counts.present}</b></div>
-              <div className="stat"><span className="muted">Absent</span><b>{counts.absent}</b></div>
-              <div className="stat"><span className="muted">Not marked</span><b>{counts.unmarked}</b></div>
-            </div>
             {dirty && <div className="msg err" style={{ marginBottom: 12 }}>You have unsaved changes.</div>}
-            <table>
-              <thead><tr><th>Roll no.</th><th>Name</th><th>Status</th></tr></thead>
-              <tbody>
-                {students.map((s) => (
-                  <tr key={s.id}>
-                    <td>{s.roll_number}</td>
-                    <td>{s.name}</td>
-                    <td>
-                      <div className="row">
-                        <button
-                          type="button"
-                          className={marks[s.id] === 'present' ? 'present-on' : 'secondary'}
-                          onClick={() => setMarks({ ...marks, [s.id]: 'present' })}
-                        >Present</button>
-                        <button
-                          type="button"
-                          className={marks[s.id] === 'absent' ? 'danger-on' : 'secondary'}
-                          onClick={() => setMarks({ ...marks, [s.id]: 'absent' })}
-                        >Absent</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="row" style={{ marginTop: 12 }}>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Roll no.</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody>
+                  {students.map((s) => (
+                    <tr key={s.id}>
+                      <td>{s.roll_number}</td>
+                      <td>{s.name}</td>
+                      <td>
+                        <div className="row" style={{ flexWrap: 'nowrap' }}>
+                          <button
+                            type="button"
+                            className={marks[s.id] === 'present' ? 'present-on' : 'secondary'}
+                            onClick={() => setMarks({ ...marks, [s.id]: 'present' })}
+                          >Present</button>
+                          <button
+                            type="button"
+                            className={marks[s.id] === 'absent' ? 'danger-on' : 'secondary'}
+                            onClick={() => setMarks({ ...marks, [s.id]: 'absent' })}
+                          >Absent</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="sticky-bar">
+              <div className="row" style={{ gap: 6 }}>
+                <span className="badge ok">Present {counts.present}</span>
+                <span className="badge bad">Absent {counts.absent}</span>
+                <span className="badge">Not marked {counts.unmarked}</span>
+              </div>
               <button
                 onClick={save}
                 disabled={busy || (savedCount > 0 && !dirty)}

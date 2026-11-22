@@ -174,6 +174,54 @@ tbody tr:hover td { background: rgba(201, 162, 39, .10); }
 .bar { height: 6px; margin-top: 5px; border-radius: 999px; background: rgba(10, 26, 68, .10); overflow: hidden; min-width: 90px; }
 .bar > div { height: 100%; background: linear-gradient(90deg, var(--royal), var(--gold)); border-radius: 999px; }
 
-/* Five tabs: scroll sideways on narrow screens instead of overflowing */
-.tabs { overflow-x: auto; }
+/* Tabs never wrap their labels */
 .tabs button.tab { white-space: nowrap; }
+
+/* ---- Phase 6: layout helpers and phone fixes ---- */
+.nowrap { white-space: nowrap; }
+.sub { display: block; font-size: 13px; color: var(--muted); }
+.only-sm { display: none; }
+.card.flush { overflow: visible; }
+.table-wrap { overflow-x: auto; }
+tr.row-editing td { background: rgba(201, 162, 39, .16); }
+.edit-panel { border-top-color: var(--crimson); }
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.field input { min-width: 0; }
+.date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Sticky bottom bar on the attendance screen */
+.sticky-bar {
+  position: sticky; bottom: 10px; z-index: 5;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 14px; padding: 10px 12px;
+  background: rgba(255, 255, 255, .90);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border: 1px solid rgba(201, 162, 39, .55); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(10, 26, 68, .20);
+}
+
+@media (max-width: 640px) {
+  /* All five tabs fit on one line */
+  .tabs { width: 100%; gap: 2px; padding: 4px; overflow-x: visible; }
+  .tabs button.tab { flex: 1 1 0; min-width: 0; padding: 8px 0; font-size: 13px; text-align: center; }
+
+  .hide-sm { display: none; }
+  th.only-sm, td.only-sm { display: table-cell; }
+  span.only-sm, div.only-sm { display: block; }
+
+  th, td { padding: 9px 4px; }
+  td button { padding: 8px 10px; font-size: 14px; }
+
+  .stack-sm > * { flex: 1 1 100%; }
+  .stat { min-width: 140px; }
+  .sticky-bar { bottom: 8px; }
+}
+
+@media (max-width: 380px) {
+  .wrap { padding-left: 8px; padding-right: 8px; }
+  .card { padding: 12px 10px; }
+  th, td { padding: 8px 3px; font-size: 13px; }
+  td button { padding: 7px 8px; font-size: 13px; }
+  .badge { padding: 2px 8px; font-size: 12px; }
+  .stat b { font-size: 28px; }
+}
