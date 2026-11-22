@@ -225,3 +225,8 @@ tr.row-editing td { background: rgba(201, 162, 39, .16); }
   .badge { padding: 2px 8px; font-size: 12px; }
   .stat b { font-size: 28px; }
 }
+
+/* Footer link */
+.footer { margin-top: 18px; text-align: center; }
+button.link-btn { background: none; border: 0; box-shadow: none; color: var(--royal); text-decoration: underline; padding: 6px 4px; font-weight: 600; }
+button.link-btn:hover:not(:disabled) { filter: none; color: var(--navy); }

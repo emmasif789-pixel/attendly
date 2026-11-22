@@ -5,6 +5,7 @@ import Reports from './Reports.jsx'
 import Dashboard from './Dashboard.jsx'
 import History from './History.jsx'
 import Students from './Students.jsx'
+import ChangePassword from './ChangePassword.jsx'
 
 function Login() {
   const [email, setEmail] = useState('')
@@ -101,6 +102,7 @@ export default function App() {
           <button className={tab === 'history' ? 'tab active' : 'tab'} onClick={() => changeTab('history')}>History</button>
         </div>
         {tab === 'dashboard' ? <Dashboard /> : tab === 'students' ? <Students /> : tab === 'attendance' ? <Attendance onDirtyChange={setAttendanceDirty} /> : tab === 'reports' ? <Reports /> : <History />}
+        <ChangePassword />
       </div>
     </>
   )
