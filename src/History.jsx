@@ -153,10 +153,12 @@ export default function History() {
             </table>
             <div className="row" style={{ marginTop: 12, justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="muted">{pageLabel(page, PAGE_SIZE, total)}</span>
-              <div className="row">
-                <button className="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
-                <button className="secondary" disabled={page >= last} onClick={() => setPage(page + 1)}>Next</button>
-              </div>
+              {total > PAGE_SIZE && (
+                <div className="row">
+                  <button className="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
+                  <button className="secondary" disabled={page >= last} onClick={() => setPage(page + 1)}>Next</button>
+                </div>
+              )}
             </div>
           </>
         )}
