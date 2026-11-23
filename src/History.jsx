@@ -3,12 +3,32 @@ import { supabase } from './supabase'
 import {
   PAGE_SIZE, sanitizeSearch, pageRange, lastPage, pageLabel, validateRange, lastDaysRange, presentRate,
 } from './historyLogic.js'
+import { toCsv, safeFilename } from './csvLogic.js'
 
 function todayLocal() {
   const d = new Date()
   const p = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
+
+// One place that applies the filters, used by both the list and the CSV export.
+function applyFilters(q, { from, to, sectionId, status, search }) {
+  q = q.gte('date', from).lte('date', to)
+  if (sectionId !== 'all') q = q.eq('section_id', sectionId)
+  if (status !== 'all') q = q.eq('status', status)
+  if (search) q = q.or(`student_name.ilike.*${search}*,roll_number.ilike.*${search}*`)
+  return q
+}
+
+const EXPORT_PAGE = 1000
+const EXPORT_MAX = 50000
+const EXPORT_COLUMNS = [
+  { header: 'Date', key: 'date' },
+  { header: 'Roll number', key: 'roll_number' },
+  { header: 'Name', key: 'student_name' },
+  { header: 'Section', key: 'section_name' },
+  { header: 'Status', key: 'status' },
+]
 
 export default function History() {
   const today = todayLocal()
@@ -30,6 +50,7 @@ export default function History() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState(null)
   const requestId = useRef(0)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     supabase.from('sections').select('id,name').order('position').then(({ data }) => data && setSections(data))
@@ -49,13 +70,8 @@ export default function History() {
     setLoading(true)
     const id = ++requestId.current
 
-    const filtered = (q) => {
-      q = q.gte('date', from).lte('date', to)
-      if (sectionId !== 'all') q = q.eq('section_id', sectionId)
-      if (status !== 'all') q = q.eq('status', status)
-      if (search) q = q.or(`student_name.ilike.*${search}*,roll_number.ilike.*${search}*`)
-      return q
-    }
+    const filters = { from, to, sectionId, status, search }
+    const filtered = (q) => applyFilters(q, filters)
     const [a, b] = pageRange(page)
 
     Promise.all([
@@ -75,6 +91,46 @@ export default function History() {
       setLoading(false)
     })
   }, [sectionId, from, to, status, search, page])
+
+  async function exportCsv() {
+    setMsg(null)
+    setExporting(true)
+    const filters = { from, to, sectionId, status, search }
+    const all = []
+    for (let i = 0; ; i++) {
+      const { data, error } = await applyFilters(
+        supabase.from('attendance_history').select('date,roll_number,student_name,section_name,status'), filters)
+        .order('date', { ascending: false }).order('section_position').order('roll_sort')
+        .range(i * EXPORT_PAGE, i * EXPORT_PAGE + EXPORT_PAGE - 1)
+      if (error) { setMsg({ type: 'err', text: error.message }); setExporting(false); return }
+      all.push(...data)
+      if (data.length < EXPORT_PAGE) break
+      if (all.length >= EXPORT_MAX) {
+        setMsg({ type: 'err', text: `Too many records to export at once (over ${EXPORT_MAX}). Narrow the dates and try again.` })
+        setExporting(false)
+        return
+      }
+    }
+    if (all.length !== total) {
+      setMsg({ type: 'err', text: `Export stopped: got ${all.length} of ${total} records. Please try again.` })
+      setExporting(false)
+      return
+    }
+    const rows = all.map((r) => ({ ...r, status: r.status === 'present' ? 'Present' : 'Absent' }))
+    const sectionLabel = sectionId === 'all' ? '' : sections.find((x) => x.id === sectionId)?.name
+    const name = safeFilename(['attendance', sectionLabel, status === 'all' ? '' : status, from, 'to', to])
+    const blob = new Blob([toCsv(rows, EXPORT_COLUMNS)], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
+    setMsg({ type: 'ok', text: `Exported ${rows.length} record${rows.length === 1 ? '' : 's'} to ${name}.` })
+    setExporting(false)
+  }
 
   function preset(days) {
     const r = lastDaysRange(today, days)
@@ -122,6 +178,9 @@ export default function History() {
           <button className="secondary" onClick={() => preset(30)}>Last 30 days</button>
           <button className="secondary" onClick={() => { setFrom('2000-01-01'); setTo(today); setPage(0) }}>All time</button>
           <button className="secondary" onClick={reset}>Reset filters</button>
+          <button onClick={exportCsv} disabled={exporting || loading || !!rangeError || total === 0}>
+            {exporting ? 'Exporting…' : `Export CSV (${total})`}
+          </button>
         </div>
       </div>
 

@@ -10,7 +10,7 @@ One administrator registers students, marks attendance by section and date, and 
 - **Students** – register, edit, delete (shows how many attendance records go with a student).
 - **Attendance** – mark Present/Absent per section and date, edit past days, unsaved-changes protection. "Mark remaining as Present" fills only students not marked yet and never changes an existing mark; Save is still required.
 - **Reports** – per-section totals, daily lists, date-wise records, per-student history and percentage.
-- **History** – filter all records by section, date range, status and name/roll number, with paging.
+- **History** – filter all records by section, date range, status and name/roll number, with paging. **Export CSV** downloads every record matching the current filters (all pages), ready for Excel/Sheets. Names that start with `=`, `+`, `-` or `@` are neutralised so they cannot run as spreadsheet formulas.
 
 All numbers are calculated from saved attendance rows (database views). Nothing is stored as a total.
 
@@ -57,5 +57,5 @@ select id from auth.users where email = 'new-admin@example.com';
 `npm test` runs the logic tests (attendance marking, dashboard maths, history filters and paging, student sorting, password rules).
 
 ## Operating notes
-- Supabase **free** projects pause after about a week without activity and have no downloadable automatic backups. For real use, move to a paid plan or export the data regularly.
+- Supabase **free** projects pause after about a week without activity and have no downloadable automatic backups. For real use, move to a paid plan, and keep a backup by using History → All time → Export CSV regularly.
 - Changing the admin password: use **Change password** at the bottom of the app.
