@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { isDirty, unmarkedStudents, changedRows, countMarks } from '../src/attendanceLogic.js'
+import { isDirty, unmarkedStudents, changedRows, countMarks, markRemaining } from '../src/attendanceLogic.js'
 
 const students = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
 
@@ -44,4 +44,23 @@ test('student added after a save shows as unmarked and as a change once marked',
 
 test('counts', () => {
   assert.deepEqual(countMarks(students, { a: 'present', b: 'absent' }), { present: 1, absent: 1, unmarked: 1 })
+})
+
+test('markRemaining fills only unmarked students and keeps existing marks', () => {
+  const marks = { a: 'absent' }
+  const next = markRemaining(students, marks, 'present')
+  assert.deepEqual(next, { a: 'absent', b: 'present', c: 'present' })
+  assert.deepEqual(marks, { a: 'absent' }) // original not changed
+})
+
+test('markRemaining on a fully marked list changes nothing', () => {
+  const marks = { a: 'present', b: 'absent', c: 'present' }
+  assert.deepEqual(markRemaining(students, marks, 'present'), marks)
+})
+
+test('markRemaining then save sends every student as a change on a fresh day', () => {
+  const marks = markRemaining(students, {}, 'present')
+  assert.equal(unmarkedStudents(students, marks).length, 0)
+  assert.equal(changedRows(students, marks, {}, 'sec', 'd').length, 3)
+  assert.equal(isDirty(students, marks, {}), true)
 })

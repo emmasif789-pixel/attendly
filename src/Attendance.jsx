@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import { isDirty, unmarkedStudents, changedRows, countMarks } from './attendanceLogic'
+import { isDirty, unmarkedStudents, changedRows, countMarks, markRemaining } from './attendanceLogic'
 
 function todayLocal() {
   const d = new Date()
@@ -119,6 +119,13 @@ export default function Attendance({ onDirtyChange }) {
                 : `Saved attendance exists for ${date} (${savedCount} of ${students.length} students). You can edit and save again.`}
             </p>
             {dirty && <div className="msg err" style={{ marginBottom: 12 }}>You have unsaved changes.</div>}
+            {counts.unmarked > 0 && (
+              <div className="row" style={{ marginBottom: 10 }}>
+                <button type="button" className="secondary" onClick={() => setMarks(markRemaining(students, marks, 'present'))}>
+                  Mark remaining {counts.unmarked} as Present
+                </button>
+              </div>
+            )}
             <div className="table-wrap">
               <table>
                 <thead><tr><th>Roll no.</th><th>Name</th><th>Status</th></tr></thead>

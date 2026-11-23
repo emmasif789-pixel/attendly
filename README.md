@@ -8,7 +8,7 @@ One administrator registers students, marks attendance by section and date, and 
 ## Screens
 - **Dashboard** – today's status per section, overall rate, last 7 days, lowest attendance.
 - **Students** – register, edit, delete (shows how many attendance records go with a student).
-- **Attendance** – mark Present/Absent per section and date, edit past days, unsaved-changes protection.
+- **Attendance** – mark Present/Absent per section and date, edit past days, unsaved-changes protection. "Mark remaining as Present" fills only students not marked yet and never changes an existing mark; Save is still required.
 - **Reports** – per-section totals, daily lists, date-wise records, per-student history and percentage.
 - **History** – filter all records by section, date range, status and name/roll number, with paging.
 

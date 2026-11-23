@@ -24,3 +24,12 @@ export function countMarks(students, marks) {
   }
   return { present, absent, unmarked: students.length - present - absent }
 }
+
+// Fill in students who are not marked yet. Never changes a mark that already exists.
+export function markRemaining(students, marks, status) {
+  const next = { ...marks }
+  for (const s of students) {
+    if (!next[s.id]) next[s.id] = status
+  }
+  return next
+}
