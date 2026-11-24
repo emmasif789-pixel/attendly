@@ -24,8 +24,8 @@ export default function Dashboard() {
     const dates = lastNDates(today, 7)
     Promise.all([
       supabase.from('section_summary').select('section_id,section_name,total_students').order('position'),
-      supabase.from('daily_summary').select('section_id,date,present,absent,marked').gte('date', dates[dates.length - 1]),
-      supabase.from('section_rate').select('section_id,present_records,marked_records,percentage'),
+      supabase.from('daily_summary').select('section_id,date,present,absent,marked,on_leave').gte('date', dates[dates.length - 1]),
+      supabase.from('section_rate').select('section_id,present_records,marked_records,leave_records,percentage'),
       supabase.from('student_summary').select('student_id,section_id,roll_number,name,present_days,recorded_days,percentage')
         .gt('recorded_days', 0).order('percentage', { ascending: true }).limit(5),
     ]).then(([sec, daily, rate, low]) => {
@@ -53,7 +53,7 @@ export default function Dashboard() {
               <span className="muted">{t.name}</span>
               <div style={{ margin: '6px 0' }}><span className={STATUS[t.status].cls}>{STATUS[t.status].label}</span></div>
               <div className="muted">
-                {t.total} students · <strong>{t.present}</strong> present · <strong>{t.absent}</strong> absent · <strong>{t.notMarked}</strong> not marked
+                {t.total} students · <strong>{t.present}</strong> present · <strong>{t.absent}</strong> absent · <strong>{t.leave}</strong> on leave · <strong>{t.notMarked}</strong> not marked
               </div>
             </div>
           ))}
@@ -71,7 +71,7 @@ export default function Dashboard() {
                 {r && r.marked_records > 0 ? (
                   <>
                     <b>{r.percentage}%</b>
-                    <span className="muted">{r.present_records} present of {r.marked_records} records</span>
+                    <span className="muted">{r.present_records} present of {r.marked_records} counted days{r.leave_records > 0 ? ` · ${r.leave_records} on leave (not counted)` : ''}</span>
                   </>
                 ) : (
                   <>
@@ -100,9 +100,12 @@ export default function Dashboard() {
                 <td>{row.date}</td>
                 {row.cells.map((c) => (
                   <td key={c.section_id}>
-                    {c.marked === 0 ? <span className="muted">–</span> : (
+                    {c.marked === 0 ? <span className="muted">–</span> : c.counted === 0 ? (
+                      <span className="muted">All on leave</span>
+                    ) : (
                       <>
-                        {c.present}/{c.marked} · <strong>{c.pct}%</strong>
+                        {c.present}/{c.counted} · <strong>{c.pct}%</strong>
+                        {c.leave > 0 && <span className="muted"> · {c.leave} leave</span>}
                         <div className="bar"><div style={{ width: `${c.pct}%` }} /></div>
                       </>
                     )}

@@ -4,6 +4,7 @@ import {
   PAGE_SIZE, sanitizeSearch, pageRange, lastPage, pageLabel, validateRange, lastDaysRange, presentRate,
 } from './historyLogic.js'
 import { toCsv, safeFilename } from './csvLogic.js'
+import { statusLabel, statusBadgeClass } from './statusLogic.js'
 
 function todayLocal() {
   const d = new Date()
@@ -47,6 +48,7 @@ export default function History() {
   const [total, setTotal] = useState(0)
   const [present, setPresent] = useState(0)
   const [absent, setAbsent] = useState(0)
+  const [leave, setLeave] = useState(0)
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState(null)
   const requestId = useRef(0)
@@ -65,7 +67,7 @@ export default function History() {
   const rangeError = validateRange(from, to)
 
   useEffect(() => {
-    if (rangeError) { setMsg({ type: 'err', text: rangeError }); setRows([]); setTotal(0); setPresent(0); setAbsent(0); setLoading(false); return }
+    if (rangeError) { setMsg({ type: 'err', text: rangeError }); setRows([]); setTotal(0); setPresent(0); setAbsent(0); setLeave(0); setLoading(false); return }
     setMsg(null)
     setLoading(true)
     const id = ++requestId.current
@@ -79,15 +81,17 @@ export default function History() {
         .order('date', { ascending: false }).order('section_position').order('roll_sort').range(a, b),
       filtered(supabase.from('attendance_history').select('id', { count: 'exact', head: true })).eq('status', 'present'),
       filtered(supabase.from('attendance_history').select('id', { count: 'exact', head: true })).eq('status', 'absent'),
-    ]).then(([list, p, ab]) => {
+      filtered(supabase.from('attendance_history').select('id', { count: 'exact', head: true })).eq('status', 'leave'),
+    ]).then(([list, p, ab, lv]) => {
       if (id !== requestId.current) return // a newer request replaced this one
-      const err = list.error || p.error || ab.error
+      const err = list.error || p.error || ab.error || lv.error
       if (err) { setMsg({ type: 'err', text: err.message }); setLoading(false); return }
       if (list.data.length === 0 && list.count > 0 && page > 0) { setPage(lastPage(list.count)); return }
       setRows(list.data)
       setTotal(list.count ?? 0)
       setPresent(p.count ?? 0)
       setAbsent(ab.count ?? 0)
+      setLeave(lv.count ?? 0)
       setLoading(false)
     })
   }, [sectionId, from, to, status, search, page])
@@ -116,7 +120,7 @@ export default function History() {
       setExporting(false)
       return
     }
-    const rows = all.map((r) => ({ ...r, status: r.status === 'present' ? 'Present' : 'Absent' }))
+    const rows = all.map((r) => ({ ...r, status: statusLabel(r.status) }))
     const sectionLabel = sectionId === 'all' ? '' : sections.find((x) => x.id === sectionId)?.name
     const name = safeFilename(['attendance', sectionLabel, status === 'all' ? '' : status, from, 'to', to])
     const blob = new Blob([toCsv(rows, EXPORT_COLUMNS)], { type: 'text/csv;charset=utf-8' })
@@ -160,6 +164,7 @@ export default function History() {
             <option value="all">All statuses</option>
             <option value="present">Present only</option>
             <option value="absent">Absent only</option>
+            <option value="leave">Leave only</option>
           </select>
           <input placeholder="Search name or roll number" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
         </div>
@@ -188,8 +193,11 @@ export default function History() {
         <div className="stat"><span className="muted">Records</span><b>{total}</b></div>
         <div className="stat"><span className="muted">Present</span><b>{present}</b></div>
         <div className="stat"><span className="muted">Absent</span><b>{absent}</b></div>
+        <div className="stat"><span className="muted">Leave</span><b>{leave}</b></div>
         <div className="stat"><span className="muted">Present rate</span><b>{rate === null ? '–' : `${rate}%`}</b></div>
       </div>
+
+      <p className="muted" style={{ margin: '-6px 0 14px' }}>Present rate = present ÷ (present + absent). Leave is excused and not counted.</p>
 
       <div className="card">
         {loading ? <p className="muted">Loading…</p> : rows.length === 0 ? (
@@ -205,7 +213,7 @@ export default function History() {
                     <td>{r.roll_number}</td>
                     <td>{r.student_name}<span className="sub only-sm">{r.section_name}</span></td>
                     <td className="hide-sm">{r.section_name}</td>
-                    <td><span className={r.status === 'present' ? 'badge ok' : 'badge bad'}>{r.status === 'present' ? 'Present' : 'Absent'}</span></td>
+                    <td><span className={statusBadgeClass(r.status)}>{statusLabel(r.status)}</span></td>
                   </tr>
                 ))}
               </tbody>

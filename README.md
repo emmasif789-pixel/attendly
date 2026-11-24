@@ -8,7 +8,7 @@ One administrator registers students, marks attendance by section and date, and 
 ## Screens
 - **Dashboard** – today's status per section, overall rate, last 7 days, lowest attendance.
 - **Students** – register, edit, delete (shows how many attendance records go with a student).
-- **Attendance** – mark Present/Absent per section and date, edit past days, unsaved-changes protection. "Mark remaining as Present" fills only students not marked yet and never changes an existing mark; Save is still required.
+- **Attendance** – mark Present, Absent or Leave per section and date, edit past days, unsaved-changes protection. "Mark remaining as Present" fills only students not marked yet and never changes an existing mark; Save is still required.
 - **Reports** – per-section totals, daily lists, date-wise records, per-student history and percentage.
 - **History** – filter all records by section, date range, status and name/roll number, with paging. **Export CSV** downloads every record matching the current filters (all pages), ready for Excel/Sheets. Names that start with `=`, `+`, `-` or `@` are neutralised so they cannot run as spreadsheet formulas.
 
@@ -27,8 +27,8 @@ Tables: `sections`, `students`, `attendance`, `admins`. Views: `section_summary`
 
 Rules enforced by the database:
 - One attendance record per student per date.
+- Status is `present`, `absent` or `leave`. **Leave is excused**: it counts as a marked day but is not counted as present or absent, so attendance % = present ÷ (present + absent).
 - Attendance section must match the student's section.
-- Status is only `present` or `absent`.
 - No attendance for future dates (Pakistan time).
 - Roll numbers are unique (ignoring case) and names/roll numbers have no leading or trailing spaces.
 - A student with attendance cannot change section (history is not rewritten).

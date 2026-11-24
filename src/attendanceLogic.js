@@ -18,11 +18,13 @@ export function changedRows(students, marks, saved, sectionId, date) {
 export function countMarks(students, marks) {
   let present = 0
   let absent = 0
+  let leave = 0
   for (const s of students) {
     if (marks[s.id] === 'present') present++
     else if (marks[s.id] === 'absent') absent++
+    else if (marks[s.id] === 'leave') leave++
   }
-  return { present, absent, unmarked: students.length - present - absent }
+  return { present, absent, leave, unmarked: students.length - present - absent - leave }
 }
 
 // Fill in students who are not marked yet. Never changes a mark that already exists.

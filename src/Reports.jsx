@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
+import { statusLabel, statusBadgeClass } from './statusLogic.js'
 
 function todayLocal() {
   const d = new Date()
@@ -14,7 +15,7 @@ export default function Reports() {
   const [sectionId, setSectionId] = useState('')
   const [date, setDate] = useState(todayLocal())
   const [daily, setDaily] = useState([])
-  const [day, setDay] = useState({ present: [], absent: [], notMarked: [] })
+  const [day, setDay] = useState({ present: [], absent: [], leave: [], notMarked: [] })
   const [students, setStudents] = useState([])
   const [history, setHistory] = useState(null) // { student, rows }
   const [msg, setMsg] = useState(null)
@@ -35,8 +36,8 @@ export default function Reports() {
     setMsg(null)
     setHistory(null)
     const [ds, st, at] = await Promise.all([
-      supabase.from('daily_summary').select('date,present,absent,marked').eq('section_id', sectionId).order('date', { ascending: false }),
-      supabase.from('student_summary').select('student_id,roll_number,name,present_days,absent_days,recorded_days,percentage').eq('section_id', sectionId),
+      supabase.from('daily_summary').select('date,present,absent,marked,on_leave').eq('section_id', sectionId).order('date', { ascending: false }),
+      supabase.from('student_summary').select('student_id,roll_number,name,present_days,absent_days,leave_days,recorded_days,percentage').eq('section_id', sectionId),
       supabase.from('attendance').select('student_id,status').eq('section_id', sectionId).eq('date', date),
     ])
     const err = ds.error || st.error || at.error
@@ -49,6 +50,7 @@ export default function Reports() {
     setDay({
       present: sorted.filter((s) => status[s.student_id] === 'present'),
       absent: sorted.filter((s) => status[s.student_id] === 'absent'),
+      leave: sorted.filter((s) => status[s.student_id] === 'leave'),
       notMarked: sorted.filter((s) => !status[s.student_id]),
     })
     setLoading(false)
@@ -94,19 +96,21 @@ export default function Reports() {
       {loading ? <p className="muted">Loading…</p> : (
         <>
           <div className="card">
-            <h2>Present and absent on {date}</h2>
-            {day.present.length + day.absent.length === 0 ? (
+            <h2>Attendance on {date}</h2>
+            {day.present.length + day.absent.length + day.leave.length === 0 ? (
               <p className="muted">No attendance saved for this section on this date.</p>
             ) : (
               <>
                 <div className="stats" style={{ marginBottom: 12 }}>
                   <div className="stat"><span className="muted">Present</span><b>{day.present.length}</b></div>
                   <div className="stat"><span className="muted">Absent</span><b>{day.absent.length}</b></div>
+                  <div className="stat"><span className="muted">On leave</span><b>{day.leave.length}</b></div>
                   <div className="stat"><span className="muted">Not marked</span><b>{day.notMarked.length}</b></div>
                 </div>
                 <div className="row" style={{ alignItems: 'flex-start' }}>
                   <div style={{ flex: 1, minWidth: 200 }}><strong>Present</strong>{list(day.present)}</div>
                   <div style={{ flex: 1, minWidth: 200 }}><strong>Absent</strong>{list(day.absent)}</div>
+                  <div style={{ flex: 1, minWidth: 200 }}><strong>On leave</strong>{list(day.leave)}</div>
                 </div>
                 {day.notMarked.length > 0 && (
                   <div style={{ marginTop: 12 }}><strong>Not marked</strong>{list(day.notMarked)}</div>
@@ -119,10 +123,10 @@ export default function Reports() {
             <h2>Date-wise records</h2>
             {daily.length === 0 ? <p className="muted">No attendance saved yet.</p> : (
               <table>
-                <thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Total marked</th></tr></thead>
+                <thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Leave</th><th>Total marked</th></tr></thead>
                 <tbody>
                   {daily.map((d) => (
-                    <tr key={d.date}><td>{d.date}</td><td>{d.present}</td><td>{d.absent}</td><td>{d.marked}</td></tr>
+                    <tr key={d.date}><td>{d.date}</td><td>{d.present}</td><td>{d.absent}</td><td>{d.on_leave}</td><td>{d.marked}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -133,12 +137,12 @@ export default function Reports() {
             <h2>Student attendance</h2>
             {students.length === 0 ? <p className="muted">No students in this section.</p> : (
               <table>
-                <thead><tr><th>Roll no.</th><th>Name</th><th className="hide-sm">Present</th><th className="hide-sm">Absent</th><th className="hide-sm">Days</th><th className="only-sm">Present / days</th><th>%</th><th></th></tr></thead>
+                <thead><tr><th>Roll no.</th><th>Name</th><th className="hide-sm">Present</th><th className="hide-sm">Absent</th><th className="hide-sm">Leave</th><th className="hide-sm">Days</th><th className="only-sm">Present / days</th><th>%</th><th></th></tr></thead>
                 <tbody>
                   {students.map((s) => (
                     <tr key={s.student_id}>
                       <td>{s.roll_number}</td><td>{s.name}</td>
-                      <td className="hide-sm">{s.present_days}</td><td className="hide-sm">{s.absent_days}</td><td className="hide-sm">{s.recorded_days}</td><td className="only-sm">{s.present_days} / {s.recorded_days}</td>
+                      <td className="hide-sm">{s.present_days}</td><td className="hide-sm">{s.absent_days}</td><td className="hide-sm">{s.leave_days}</td><td className="hide-sm">{s.recorded_days}</td><td className="only-sm">{s.present_days} / {s.recorded_days}</td>
                       <td>{s.percentage === null ? '–' : `${s.percentage}%`}</td>
                       <td><button className="secondary" onClick={() => openHistory(s)}>History</button></td>
                     </tr>
@@ -146,7 +150,7 @@ export default function Reports() {
                 </tbody>
               </table>
             )}
-            <p className="muted" style={{ marginBottom: 0 }}>% = present days ÷ days with a saved record for that student.</p>
+            <p className="muted" style={{ marginBottom: 0 }}>% = present days ÷ (present + absent days). Days on leave are excused and not counted.</p>
           </div>
 
           {history && (
@@ -160,7 +164,7 @@ export default function Reports() {
                   <thead><tr><th>Date</th><th>Status</th></tr></thead>
                   <tbody>
                     {history.rows.map((r) => (
-                      <tr key={r.date}><td>{r.date}</td><td>{r.status === 'present' ? 'Present' : 'Absent'}</td></tr>
+                      <tr key={r.date}><td>{r.date}</td><td><span className={statusBadgeClass(r.status)}>{statusLabel(r.status)}</span></td></tr>
                     ))}
                   </tbody>
                 </table>

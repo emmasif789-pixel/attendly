@@ -230,3 +230,23 @@ tr.row-editing td { background: rgba(201, 162, 39, .16); }
 .footer { margin-top: 18px; text-align: center; }
 button.link-btn { background: none; border: 0; box-shadow: none; color: var(--royal); text-decoration: underline; padding: 6px 4px; font-weight: 600; }
 button.link-btn:hover:not(:disabled) { filter: none; color: var(--navy); }
+
+/* Leave status */
+button.leave-on { background: linear-gradient(135deg, #b8901c, var(--gold)); color: var(--navy); box-shadow: 0 4px 12px rgba(201, 162, 39, .35); }
+.badge.leave { background: rgba(201, 162, 39, .22); color: #6b5300; }
+
+/* Attendance rows on a phone: name on top, the three buttons below sharing the width */
+@media (max-width: 640px) {
+  .att-table thead { display: none; }
+  .att-table tr { display: grid; grid-template-columns: 44px 1fr; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(10, 26, 68, .09); }
+  .att-table td { border: 0; padding: 2px 4px; }
+  .att-table td:last-child { grid-column: 1 / -1; padding-top: 6px; }
+  .att-table td:last-child .row { width: 100%; }
+  .att-table td:last-child button { flex: 1 1 0; }
+}
+
+@media (max-width: 640px) {
+  .sticky-bar { padding: 8px 10px; gap: 8px; }
+  .sticky-bar .badge { font-size: 12px; padding: 2px 7px; }
+  .sticky-bar > button { padding: 8px 14px; font-size: 15px; }
+}

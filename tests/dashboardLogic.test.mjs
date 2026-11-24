@@ -28,8 +28,8 @@ const daily = [
 
 test('today per section: taken, not taken, and not-marked counts', () => {
   const t = todayBySection(sections, daily, '2026-11-21')
-  assert.deepEqual(t[0], { section_id: 'med', name: 'FSC Pre-Medical', total: 2, present: 1, absent: 1, notMarked: 0, status: 'full' })
-  assert.deepEqual(t[1], { section_id: 'eng', name: 'FSC Pre-Engineering', total: 1, present: 0, absent: 0, notMarked: 1, status: 'none' })
+  assert.deepEqual(t[0], { section_id: 'med', name: 'FSC Pre-Medical', total: 2, present: 1, absent: 1, leave: 0, notMarked: 0, status: 'full' })
+  assert.deepEqual(t[1], { section_id: 'eng', name: 'FSC Pre-Engineering', total: 1, present: 0, absent: 0, leave: 0, notMarked: 1, status: 'none' })
 })
 
 test('student added after attendance was taken shows as partly taken', () => {
@@ -47,4 +47,22 @@ test('week grid: percentages and empty days', () => {
   assert.equal(g[2].cells[0].pct, null)
   const third = weekGrid(sections, [{ section_id: 'eng', date: 'd', present: 2, absent: 1, marked: 3 }], ['d'])
   assert.equal(third[0].cells[1].pct, 66.7)
+})
+
+test('leave counts as taken and is excused from the percentage', () => {
+  const secs = [{ section_id: 'med', section_name: 'M', total_students: 4 }]
+  const d = [{ section_id: 'med', date: 'd1', present: 2, absent: 1, marked: 4, on_leave: 1 }]
+  const t = todayBySection(secs, d, 'd1')
+  assert.deepEqual([t[0].present, t[0].absent, t[0].leave, t[0].notMarked, t[0].status], [2, 1, 1, 0, 'full'])
+  const g = weekGrid(secs, d, ['d1'])
+  assert.equal(g[0].cells[0].counted, 3)
+  assert.equal(g[0].cells[0].pct, 66.7) // 2 / (2 + 1), the leave day is not counted
+})
+
+test('a day where everyone is on leave has no percentage', () => {
+  const secs = [{ section_id: 'med', section_name: 'M', total_students: 2 }]
+  const g = weekGrid(secs, [{ section_id: 'med', date: 'd1', present: 0, absent: 0, marked: 2, on_leave: 2 }], ['d1'])
+  assert.equal(g[0].cells[0].pct, null)
+  assert.equal(g[0].cells[0].leave, 2)
+  assert.equal(todayBySection(secs, [{ section_id: 'med', date: 'd1', present: 0, absent: 0, marked: 2, on_leave: 2 }], 'd1')[0].status, 'full')
 })

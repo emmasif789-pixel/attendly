@@ -7,7 +7,7 @@ const students = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
 test('nothing marked, nothing saved: not dirty, all unmarked', () => {
   assert.equal(isDirty(students, {}, {}), false)
   assert.equal(unmarkedStudents(students, {}).length, 3)
-  assert.deepEqual(countMarks(students, {}), { present: 0, absent: 0, unmarked: 3 })
+  assert.deepEqual(countMarks(students, {}), { present: 0, absent: 0, leave: 0, unmarked: 3 })
 })
 
 test('first save sends every marked student', () => {
@@ -43,7 +43,7 @@ test('student added after a save shows as unmarked and as a change once marked',
 })
 
 test('counts', () => {
-  assert.deepEqual(countMarks(students, { a: 'present', b: 'absent' }), { present: 1, absent: 1, unmarked: 1 })
+  assert.deepEqual(countMarks(students, { a: 'present', b: 'absent' }), { present: 1, absent: 1, leave: 0, unmarked: 1 })
 })
 
 test('markRemaining fills only unmarked students and keeps existing marks', () => {
@@ -63,4 +63,21 @@ test('markRemaining then save sends every student as a change on a fresh day', (
   assert.equal(unmarkedStudents(students, marks).length, 0)
   assert.equal(changedRows(students, marks, {}, 'sec', 'd').length, 3)
   assert.equal(isDirty(students, marks, {}), true)
+})
+
+test('leave counts as marked, not as present or absent', () => {
+  assert.deepEqual(countMarks(students, { a: 'present', b: 'leave', c: 'leave' }), { present: 1, absent: 0, leave: 2, unmarked: 0 })
+  assert.equal(unmarkedStudents(students, { a: 'present', b: 'leave', c: 'absent' }).length, 0)
+})
+
+test('changing a mark to leave is a change and only that row is sent', () => {
+  const saved = { a: 'present', b: 'absent', c: 'present' }
+  const marks = { ...saved, b: 'leave' }
+  assert.equal(isDirty(students, marks, saved), true)
+  const rows = changedRows(students, marks, saved, 'sec', 'd')
+  assert.deepEqual(rows.map((r) => [r.student_id, r.status]), [['b', 'leave']])
+})
+
+test('markRemaining does not overwrite a leave mark', () => {
+  assert.deepEqual(markRemaining(students, { a: 'leave' }, 'present'), { a: 'leave', b: 'present', c: 'present' })
 })

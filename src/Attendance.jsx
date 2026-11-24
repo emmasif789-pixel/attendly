@@ -127,7 +127,7 @@ export default function Attendance({ onDirtyChange }) {
               </div>
             )}
             <div className="table-wrap">
-              <table>
+              <table className="att-table">
                 <thead><tr><th>Roll no.</th><th>Name</th><th>Status</th></tr></thead>
                 <tbody>
                   {students.map((s) => (
@@ -146,6 +146,11 @@ export default function Attendance({ onDirtyChange }) {
                             className={marks[s.id] === 'absent' ? 'danger-on' : 'secondary'}
                             onClick={() => setMarks({ ...marks, [s.id]: 'absent' })}
                           >Absent</button>
+                          <button
+                            type="button"
+                            className={marks[s.id] === 'leave' ? 'leave-on' : 'secondary'}
+                            onClick={() => setMarks({ ...marks, [s.id]: 'leave' })}
+                          >Leave</button>
                         </div>
                       </td>
                     </tr>
@@ -157,7 +162,8 @@ export default function Attendance({ onDirtyChange }) {
               <div className="row" style={{ gap: 6 }}>
                 <span className="badge ok">Present {counts.present}</span>
                 <span className="badge bad">Absent {counts.absent}</span>
-                <span className="badge">Not marked {counts.unmarked}</span>
+                <span className="badge leave">Leave {counts.leave}</span>
+                <span className="badge">Unmarked {counts.unmarked}</span>
               </div>
               <button
                 onClick={save}

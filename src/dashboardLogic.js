@@ -27,6 +27,7 @@ export function todayBySection(sections, daily, today) {
       total: s.total_students,
       present: row?.present ?? 0,
       absent: row?.absent ?? 0,
+      leave: row?.on_leave ?? 0,
       notMarked: Math.max(s.total_students - marked, 0),
       status: takenStatus(s.total_students, marked),
     }
@@ -40,11 +41,14 @@ export function weekGrid(sections, daily, dates) {
       const row = daily.find((d) => d.section_id === s.section_id && d.date === date)
       const marked = row?.marked ?? 0
       const present = row?.present ?? 0
+      const counted = present + (row?.absent ?? 0) // leave is excused, so it is not counted
       return {
         section_id: s.section_id,
         present,
         marked,
-        pct: marked ? Math.round((1000 * present) / marked) / 10 : null,
+        counted,
+        leave: row?.on_leave ?? 0,
+        pct: counted ? Math.round((1000 * present) / counted) / 10 : null,
       }
     }),
   }))
