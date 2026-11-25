@@ -1,6 +1,6 @@
 # Attendly
 
-College attendance management for five sections: **FSC Pre-Medical**, **FSC Pre-Engineering**, **Commerce**, **FA (IT)** and **ICS**.
+College attendance management for five sections: **FSC Pre-Medical**, **FSC Pre-Engineering**, **Commerce**, **FA(IT)** and **ICS**.
 One administrator registers students, marks attendance by section and date, and views dashboards, reports and history.
 
 **Stack:** Vite + React, Supabase (Postgres + Auth), deployed on Vercel.
