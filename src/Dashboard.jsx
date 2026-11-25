@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import { lastNDates, todayBySection, weekGrid } from './dashboardLogic'
+import { lastNDates, todayBySection, weekBySection, rateTone } from './dashboardLogic'
 
 function todayLocal() {
   const d = new Date()
@@ -39,7 +39,11 @@ export default function Dashboard() {
   if (!data) return <p className="muted">Loading…</p>
 
   const todayRows = todayBySection(data.sections, data.daily, today)
-  const grid = weekGrid(data.sections, data.daily, data.dates)
+  const week = weekBySection(data.sections, data.daily, data.dates)
+  const dayHead = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    return { weekday: new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }), day: d }
+  }
   const sectionName = (id) => data.sections.find((s) => s.section_id === id)?.section_name ?? ''
   const rateOf = (id) => data.rate.find((r) => r.section_id === id)
 
@@ -87,34 +91,40 @@ export default function Dashboard() {
 
       <div className="card">
         <h2>Last 7 days</h2>
-        <table>
+        <table className="heat">
           <thead>
             <tr>
-              <th>Date</th>
-              {data.sections.map((s) => <th key={s.section_id}>{s.section_name}</th>)}
+              <th>Section</th>
+              {week[0]?.days.map((d) => {
+                const h = dayHead(d.date)
+                return <th key={d.date} title={d.date}><span>{h.weekday}</span><b>{h.day}</b></th>
+              })}
             </tr>
           </thead>
           <tbody>
-            {grid.map((row) => (
-              <tr key={row.date}>
-                <td>{row.date}</td>
-                {row.cells.map((c) => (
-                  <td key={c.section_id}>
-                    {c.marked === 0 ? <span className="muted">–</span> : c.counted === 0 ? (
-                      <span className="muted">All on leave</span>
-                    ) : (
-                      <>
-                        {c.present}/{c.counted} · <strong>{c.pct}%</strong>
-                        {c.leave > 0 && <span className="muted"> · {c.leave} leave</span>}
-                        <div className="bar"><div style={{ width: `${c.pct}%` }} /></div>
-                      </>
-                    )}
-                  </td>
-                ))}
+            {week.map((sec) => (
+              <tr key={sec.section_id}>
+                <td className="heat-name">{sec.name}</td>
+                {sec.days.map((d) => {
+                  const tip = d.marked === 0
+                    ? `${sec.name}, ${d.date}: attendance not taken`
+                    : `${sec.name}, ${d.date}: ${d.present} of ${d.counted} present${d.pct !== null ? ` (${d.pct}%)` : ''}${d.leave ? `, ${d.leave} on leave` : ''}`
+                  return (
+                    <td key={d.date} title={tip}>
+                      <span className={`heat-cell ${rateTone(d.pct)}`}>
+                        {d.marked === 0 ? '–' : d.pct === null ? 'L' : Math.round(d.pct)}
+                      </span>
+                    </td>
+                  )
+                })}
               </tr>
             ))}
           </tbody>
         </table>
+        <p className="muted" style={{ marginBottom: 0 }}>
+          Each cell is that day's attendance % (present ÷ present + absent). Green 85 and over, gold 75 to 84, red below 75.
+          – means not taken, L means everyone on leave.
+        </p>
       </div>
 
       <div className="card">

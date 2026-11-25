@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { lastNDates, takenStatus, todayBySection, weekGrid } from '../src/dashboardLogic.js'
+import { lastNDates, takenStatus, todayBySection, weekGrid, weekBySection, rateTone } from '../src/dashboardLogic.js'
 
 test('lastNDates counts back, including across month and year ends', () => {
   assert.deepEqual(lastNDates('2026-11-21', 3), ['2026-11-21', '2026-11-20', '2026-11-19'])
@@ -65,4 +65,32 @@ test('a day where everyone is on leave has no percentage', () => {
   assert.equal(g[0].cells[0].pct, null)
   assert.equal(g[0].cells[0].leave, 2)
   assert.equal(todayBySection(secs, [{ section_id: 'med', date: 'd1', present: 0, absent: 0, marked: 2, on_leave: 2 }], 'd1')[0].status, 'full')
+})
+
+test('weekBySection: one row per section, oldest day first, same numbers as the grid', () => {
+  const secs = [
+    { section_id: 'a', section_name: 'A', total_students: 2 },
+    { section_id: 'b', section_name: 'B', total_students: 1 },
+  ]
+  const d = [
+    { section_id: 'a', date: '2026-11-21', present: 2, absent: 0, marked: 2, on_leave: 0 },
+    { section_id: 'a', date: '2026-11-20', present: 1, absent: 1, marked: 2, on_leave: 0 },
+    { section_id: 'b', date: '2026-11-20', present: 0, absent: 0, marked: 1, on_leave: 1 },
+  ]
+  const rows = weekBySection(secs, d, ['2026-11-21', '2026-11-20', '2026-11-19'])
+  assert.equal(rows.length, 2)
+  assert.deepEqual(rows[0].days.map((x) => x.date), ['2026-11-19', '2026-11-20', '2026-11-21'])
+  assert.deepEqual(rows[0].days.map((x) => x.pct), [null, 50, 100])
+  assert.deepEqual(rows[1].days.map((x) => [x.pct, x.leave, x.marked]), [[null, 0, 0], [null, 1, 1], [null, 0, 0]])
+  assert.equal(rows[0].name, 'A')
+})
+
+test('rateTone bands', () => {
+  assert.equal(rateTone(null), 'none')
+  assert.equal(rateTone(100), 'good')
+  assert.equal(rateTone(85), 'good')
+  assert.equal(rateTone(84.9), 'ok')
+  assert.equal(rateTone(75), 'ok')
+  assert.equal(rateTone(74.9), 'low')
+  assert.equal(rateTone(0), 'low')
 })

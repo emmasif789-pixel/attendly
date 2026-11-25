@@ -250,3 +250,17 @@ button.leave-on { background: linear-gradient(135deg, #b8901c, var(--gold)); col
   .sticky-bar .badge { font-size: 12px; padding: 2px 7px; }
   .sticky-bar > button { padding: 8px 14px; font-size: 15px; }
 }
+
+/* Dashboard: last-7-days grid (one row per section, one cell per day) */
+table.heat { table-layout: fixed; }
+table.heat th, table.heat td { padding: 6px 2px; text-align: center; }
+table.heat th:first-child, table.heat td:first-child { text-align: left; width: 32%; padding-left: 4px; }
+table.heat th span { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+table.heat th b { display: block; font-size: 14px; }
+table.heat td.heat-name { font-weight: 600; font-size: 14px; word-break: break-word; }
+tbody tr:hover td.heat-name, table.heat tbody tr:hover td { background: transparent; }
+.heat-cell { display: inline-block; min-width: 30px; padding: 5px 0; border-radius: 8px; font-weight: 700; font-size: 13px; background: rgba(10, 26, 68, .07); color: var(--muted); }
+.heat-cell.good { background: rgba(21, 128, 61, .18); color: #14532d; }
+.heat-cell.ok { background: rgba(201, 162, 39, .28); color: #5c4700; }
+.heat-cell.low { background: rgba(200, 16, 46, .16); color: #9b0d24; }
+@media (max-width: 380px) { table.heat th:first-child, table.heat td:first-child { width: 30%; } .heat-cell { min-width: 26px; font-size: 12px; } }

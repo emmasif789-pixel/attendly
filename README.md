@@ -1,12 +1,12 @@
 # Attendly
 
-College attendance management for two sections: **FSC Pre-Medical** and **FSC Pre-Engineering**.
+College attendance management for five sections: **FSC Pre-Medical**, **FSC Pre-Engineering**, **Commerce**, **FA (IT)** and **ICS**.
 One administrator registers students, marks attendance by section and date, and views dashboards, reports and history.
 
 **Stack:** Vite + React, Supabase (Postgres + Auth), deployed on Vercel.
 
 ## Screens
-- **Dashboard** – today's status per section, overall rate, last 7 days, lowest attendance.
+- **Dashboard** – today's status per section, overall rate, a last-7-days grid (one row per section, one coloured cell per day), lowest attendance.
 - **Students** – register, edit, delete (shows how many attendance records go with a student).
 - **Attendance** – mark Present, Absent or Leave per section and date, edit past days, unsaved-changes protection. "Mark remaining as Present" fills only students not marked yet and never changes an existing mark; Save is still required.
 - **Reports** – per-section totals, daily lists, date-wise records, per-student history and percentage.
@@ -39,6 +39,15 @@ Rules enforced by the database:
 - Logged-out visitors have no table privileges at all. Logged-in non-admins see nothing and get an "Access denied" screen.
 - `private.is_admin()` is the security-definer check and lives outside the API-exposed schema.
 - `vercel.json` sets a Content-Security-Policy and other security headers.
+
+### Add a section
+There is no screen for sections. In the Supabase SQL editor run (use the next free `position`; it sets the order shown everywhere):
+
+```sql
+insert into public.sections (name, position) values ('New Section Name', 6);
+```
+
+The new section appears everywhere automatically.
 
 ### Add or remove an administrator
 Create the user in Supabase → Authentication → Users, then run in the SQL editor:

@@ -53,3 +53,22 @@ export function weekGrid(sections, daily, dates) {
     }),
   }))
 }
+
+// One row per section, one cell per day, oldest day first (reads left to right).
+export function weekBySection(sections, daily, dates) {
+  const oldestFirst = [...dates].reverse()
+  const grid = weekGrid(sections, daily, oldestFirst)
+  return sections.map((s, i) => ({
+    section_id: s.section_id,
+    name: s.section_name,
+    days: grid.map((row) => ({ date: row.date, ...row.cells[i] })),
+  }))
+}
+
+// Colour band for a day's attendance percentage.
+export function rateTone(pct) {
+  if (pct === null || pct === undefined) return 'none'
+  if (pct >= 85) return 'good'
+  if (pct >= 75) return 'ok'
+  return 'low'
+}
